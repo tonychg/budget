@@ -28,6 +28,7 @@
             go-task
             clippy
             husky
+            sops
           ];
         };
       }
