@@ -2,7 +2,7 @@ use crate::Date;
 
 #[derive(Default, Clone, Debug)]
 pub struct Calendar {
-    pub start_at: Date,
+    start_at: Date,
 }
 
 impl Calendar {

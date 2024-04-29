@@ -2,16 +2,16 @@ use crate::{Date, Line, Recurence};
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct Subscription {
+pub struct Payment {
     pub label: String,
     pub amount: f64,
     pub date: Date,
     pub recurence: Recurence,
 }
 
-impl Subscription {
+impl Payment {
     pub fn new(label: &str, amount: f64, date: &str, recurence: Recurence) -> Self {
-        Subscription {
+        Payment {
             label: label.to_string(),
             amount,
             date: date.to_string().into(),

@@ -4,14 +4,14 @@
 
 ```toml
 # This is cost example
-[[subscriptions]]
+[[payments]]
 label = "Scaleway"
 amount = -35.0
 date = "2024-01-08"
 recurence = "monthly"
 
 # This is an income example
-[[subscriptions]]
+[[payments]]
 label = "Rent"
 amount = 2000.0
 date = "2024-01-08"

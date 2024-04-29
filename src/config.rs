@@ -4,20 +4,20 @@ use serde::Deserialize;
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
     start_at: Option<String>,
-    subscriptions: Vec<Subscription>,
+    payments: Vec<Payment>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-struct Subscription {
+struct Payment {
     label: String,
     amount: f64,
     date: String,
     recurence: Option<Recurence>,
 }
 
-impl From<&Subscription> for crate::Subscription {
-    fn from(config: &Subscription) -> Self {
-        crate::Subscription::new(
+impl From<&Payment> for crate::Payment {
+    fn from(config: &Payment) -> Self {
+        crate::Payment::new(
             &config.label,
             config.amount,
             &config.date,
@@ -29,7 +29,7 @@ impl From<&Subscription> for crate::Subscription {
 impl From<Config> for Budget {
     fn from(value: Config) -> Self {
         Budget {
-            subscriptions: value.subscriptions.iter().map(|s| s.into()).collect(),
+            payments: value.payments.iter().map(|s| s.into()).collect(),
             calendar: Calendar::new(&value.start_at.unwrap_or_default()),
         }
     }

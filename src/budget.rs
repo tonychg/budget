@@ -1,12 +1,9 @@
 mod calendar;
 mod config;
 mod date;
-mod subscription;
+mod payment;
 
-pub use calendar::Calendar;
-pub use config::Config;
-pub use date::Date;
-pub use subscription::Subscription;
+pub(crate) use {calendar::Calendar, config::Config, date::Date, payment::Payment};
 
 use serde::Deserialize;
 use std::{fs, path::PathBuf};
@@ -51,14 +48,14 @@ impl std::iter::FromIterator<Line> for Group {
 
 #[derive(Clone, Debug)]
 pub struct Budget {
-    subscriptions: Vec<Subscription>,
+    payments: Vec<Payment>,
     calendar: Calendar,
 }
 
 impl Budget {
     pub fn new(start_at: &str) -> Self {
         Budget {
-            subscriptions: Vec::new(),
+            payments: Vec::new(),
             calendar: Calendar::new(start_at),
         }
     }
@@ -71,15 +68,15 @@ impl Budget {
     }
 
     pub fn register(&mut self, label: &str, amount: f64, start_at: &str, recurence: Recurence) {
-        self.subscriptions
-            .push(Subscription::new(label, amount, start_at, recurence));
+        self.payments
+            .push(Payment::new(label, amount, start_at, recurence));
     }
 
     pub fn lines_at(&self, date: Date, months: u32) -> Group {
-        self.subscriptions
+        self.payments
             .clone()
             .into_iter()
-            .flat_map(|subscription| subscription.lines(months))
+            .flat_map(|payment| payment.lines(months))
             .filter(move |line| line.timestamp >= date && line.timestamp < date.add_months(1))
             .collect()
     }
