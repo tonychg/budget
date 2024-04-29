@@ -8,7 +8,7 @@ pub struct Calendar {
 impl Calendar {
     pub fn new(start_at: &str) -> Self {
         Calendar {
-            start_at: start_at.into(),
+            start_at: start_at.to_string().into(),
         }
     }
 
