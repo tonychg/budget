@@ -81,7 +81,7 @@ impl Budget {
             .collect()
     }
 
-    pub fn group_by_date(&self, months: u32) -> Vec<(Date, Group)> {
+    pub fn group_by_month(&self, months: u32) -> Vec<(Date, Group)> {
         self.calendar
             .clone()
             .iter_months(months)

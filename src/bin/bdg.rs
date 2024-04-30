@@ -36,7 +36,7 @@ fn main() {
         Some(Commands::Show { budget, months }) => {
             let budget = Budget::from_file(budget);
             let mut total = 0.0;
-            budget.group_by_date(months).iter().for_each(|(date, group)| {
+            budget.group_by_month(months).iter().for_each(|(date, group)| {
                 println!("{} total={} month={}", date, total, group.sum());
                 total += group.sum();
             });
