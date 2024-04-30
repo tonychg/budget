@@ -5,19 +5,17 @@ use std::path::PathBuf;
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Bdg {
-    /// Optional name to operate on
-    name: Option<String>,
-
     /// Turn debugging information on
     #[arg(short, long, action = clap::ArgAction::Count)]
     debug: u8,
 
     #[command(subcommand)]
-    command: Option<Commands>,
+    command: Commands,
 }
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Shows the budget group by month
     Show {
         /// Sets config file
         budget: PathBuf,
@@ -29,18 +27,17 @@ enum Commands {
 
 fn main() {
     let bdg = Bdg::parse();
-    if let Some(name) = bdg.name {
-        println!("Name: {}", name);
-    }
     match bdg.command {
-        Some(Commands::Show { budget, months }) => {
+        Commands::Show { budget, months } => {
             let budget = Budget::from_file(budget);
             let mut total = 0.0;
-            budget.group_by_month(months).iter().for_each(|(date, group)| {
-                println!("{} total={} month={}", date, total, group.sum());
-                total += group.sum();
-            });
+            budget
+                .group_by_month(months)
+                .iter()
+                .for_each(|(date, group)| {
+                    println!("{} total={} month={}", date, total, group.sum());
+                    total += group.sum();
+                });
         }
-        None => println!("No command provided"),
     }
 }
