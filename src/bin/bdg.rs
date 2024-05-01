@@ -22,13 +22,20 @@ enum Commands {
         /// Sets the number of months to show
         #[arg(short, long, default_value = "12")]
         months: u32,
+        /// Show the detail of payments
+        #[arg(short, long)]
+        all: bool,
     },
 }
 
 fn main() {
     let bdg = Bdg::parse();
     match bdg.command {
-        Commands::Show { budget, months } => {
+        Commands::Show {
+            budget,
+            months,
+            all,
+        } => {
             let budget = Budget::from_file(budget);
             let mut total = 0.0;
             budget
@@ -36,6 +43,9 @@ fn main() {
                 .iter()
                 .for_each(|(date, group)| {
                     println!("{} total={} month={}", date, total, group.sum());
+                    if all {
+                        group.iter().for_each(|line| println!("  {}", line));
+                    }
                     total += group.sum();
                 });
         }

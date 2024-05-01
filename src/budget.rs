@@ -6,13 +6,19 @@ mod payment;
 pub(crate) use {calendar::Calendar, config::Config, date::Date, payment::Payment};
 
 use serde::Deserialize;
-use std::{fs, path::PathBuf};
+use std::{fmt::Display, fs, path::PathBuf};
 
 #[derive(Clone, Debug)]
 pub struct Line {
     pub label: String,
     pub amount: f64,
     pub timestamp: Date,
+}
+
+impl Display for Line {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} ({:6}) {}", self.timestamp, self.amount, self.label)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -37,6 +43,10 @@ pub struct Group(Vec<Line>);
 impl Group {
     pub fn sum(&self) -> f64 {
         self.0.iter().map(|line| line.amount).sum()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Line> {
+        self.0.iter()
     }
 }
 
