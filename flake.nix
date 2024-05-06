@@ -53,6 +53,7 @@
             git
             go-task
             sops
+            husky
           ];
         };
       });

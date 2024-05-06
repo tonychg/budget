@@ -1,0 +1,16 @@
+---
+version: 3
+tasks:
+  build:
+    cmds:
+      - cargo build --release
+  test:
+    cmds:
+      - cargo test
+  lint:
+    cmds:
+      - cargo clippy
+  default:
+    cmds:
+      - task test
+      - task lint
