@@ -1,12 +1,14 @@
 mod calendar;
 mod config;
 mod date;
+mod export;
 mod payment;
 
 pub(crate) use {
     calendar::Calendar,
     config::Config,
     date::Date,
+    export::Export,
     payment::{Payment, PaymentGroup, Recurence},
 };
 
@@ -24,6 +26,11 @@ impl Budget {
             toml::from_str(&fs::read_to_string(path).expect("Unable to read file"))
                 .expect("Invalid TOML file");
         config.into()
+    }
+
+    pub fn from_export(path: PathBuf) -> Self {
+        let export = Export::from_file(path);
+        export.into()
     }
 
     pub fn show(&self, months: u32, filter: Option<String>, all: bool) {

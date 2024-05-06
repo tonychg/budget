@@ -27,12 +27,12 @@ pub struct Payment {
 }
 
 impl Payment {
-    pub fn new(label: &str, amount: f64, date: &str, recurence: Recurence) -> Self {
+    pub fn new(label: &str, amount: f64, date: &str, recurence: Option<Recurence>) -> Self {
         Payment {
             label: label.to_string(),
             amount,
             date: date.to_string().into(),
-            recurence: Some(recurence),
+            recurence,
         }
     }
 

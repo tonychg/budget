@@ -33,6 +33,9 @@ enum Commands {
 
 fn main() {
     let bdg = Bdg::parse();
+
+    env_logger::init();
+
     match bdg.command {
         Commands::Show {
             budget,
@@ -40,8 +43,16 @@ fn main() {
             all,
             filter,
         } => {
-            let budget = Budget::from_file(budget);
-            budget.show(months, filter, all);
+            match budget
+                .extension()
+                .expect("File with not extension, can't detect filetype")
+                .to_str()
+                .expect("Invalid filename")
+            {
+                "toml" => Budget::from_file(budget).show(months, filter, all),
+                "csv" => Budget::from_export(budget).show(months, filter, all),
+                _ => panic!("Extension not supported: toml,csv"),
+            };
         }
     }
 }

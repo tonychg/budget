@@ -21,7 +21,7 @@ impl From<&Payment> for crate::Payment {
             &config.label,
             config.amount,
             &config.date,
-            config.recurence.clone().unwrap_or(Recurence::Monthly),
+            Some(config.recurence.clone().unwrap_or(Recurence::Monthly)),
         )
     }
 }

@@ -15,8 +15,17 @@ impl Default for Date {
 impl From<String> for Date {
     fn from(value: String) -> Self {
         Self(
-            DateTime::parse_from_str(&format!("{} 12:00:00 +0000", value), "%Y-%m-%d %H:%M:%S %z")
+            match DateTime::parse_from_str(
+                &format!("{} 12:00:00 +0000", value),
+                "%Y-%m-%d %H:%M:%S %z",
+            ) {
+                Ok(date) => date,
+                Err(_) => DateTime::parse_from_str(
+                    &format!("{} 12:00:00 +0000", value),
+                    "%d/%m/%Y %H:%M:%S %z",
+                )
                 .expect("Invalid date format: use YYYY-MM-DD"),
+            },
         )
     }
 }
