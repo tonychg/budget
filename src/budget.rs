@@ -3,58 +3,14 @@ mod config;
 mod date;
 mod payment;
 
-pub(crate) use {calendar::Calendar, config::Config, date::Date, payment::Payment};
+pub(crate) use {
+    calendar::Calendar,
+    config::Config,
+    date::Date,
+    payment::{Payment, PaymentGroup, Recurence},
+};
 
-use serde::Deserialize;
-use std::{fmt::Display, fs, path::PathBuf};
-
-#[derive(Clone, Debug)]
-pub struct Line {
-    pub label: String,
-    pub amount: f64,
-    pub timestamp: Date,
-}
-
-impl Display for Line {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({:6}) {}", self.timestamp, self.amount, self.label)
-    }
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Recurence {
-    Monthly,
-    NumberOfMonths(u32),
-}
-
-impl Recurence {
-    pub fn months(&self, months: u32) -> u32 {
-        match self {
-            Recurence::Monthly => months,
-            Recurence::NumberOfMonths(n) => *n,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Group(Vec<Line>);
-
-impl Group {
-    pub fn sum(&self) -> f64 {
-        self.0.iter().map(|line| line.amount).sum()
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &Line> {
-        self.0.iter()
-    }
-}
-
-impl std::iter::FromIterator<Line> for Group {
-    fn from_iter<T: IntoIterator<Item = Line>>(iter: T) -> Self {
-        Self(iter.into_iter().collect())
-    }
-}
+use std::{fs, path::PathBuf};
 
 #[derive(Clone, Debug)]
 pub struct Budget {
@@ -63,13 +19,6 @@ pub struct Budget {
 }
 
 impl Budget {
-    pub fn new(start_at: &str) -> Self {
-        Budget {
-            payments: Vec::new(),
-            calendar: Calendar::new(start_at),
-        }
-    }
-
     pub fn from_file(path: PathBuf) -> Self {
         let config: Config =
             toml::from_str(&fs::read_to_string(path).expect("Unable to read file"))
@@ -77,25 +26,42 @@ impl Budget {
         config.into()
     }
 
-    pub fn register(&mut self, label: &str, amount: f64, start_at: &str, recurence: Recurence) {
-        self.payments
-            .push(Payment::new(label, amount, start_at, recurence));
+    pub fn show(&self, months: u32, filter: Option<String>, all: bool) {
+        let mut total = 0.0;
+
+        self.group_by_month(months, filter)
+            .iter()
+            .for_each(|(date, group)| {
+                println!("{} total={} month={}", date, total, group.sum());
+                if all {
+                    group.iter().for_each(|line| println!("  {}", line));
+                }
+                total += group.sum();
+            });
     }
 
-    pub fn lines_at(&self, date: Date, months: u32) -> Group {
+    fn payments_at(&self, date: Date, months: u32, filter: Option<String>) -> PaymentGroup {
         self.payments
             .clone()
             .into_iter()
-            .flat_map(|payment| payment.lines(months))
-            .filter(move |line| line.timestamp >= date && line.timestamp < date.add_months(1))
+            .flat_map(|payment| payment.flatten(months))
+            .filter(move |payment| match &filter {
+                Some(search) => {
+                    payment.label_match(search)
+                        && payment.date() >= date
+                        && payment.date() < date.add_months(1)
+                }
+
+                None => payment.date() >= date && payment.date() < date.add_months(1),
+            })
             .collect()
     }
 
-    pub fn group_by_month(&self, months: u32) -> Vec<(Date, Group)> {
+    fn group_by_month(&self, months: u32, filter: Option<String>) -> Vec<(Date, PaymentGroup)> {
         self.calendar
             .clone()
             .iter_months(months)
-            .map(|date| (date.clone(), self.lines_at(date, months)))
+            .map(|date| (date.clone(), self.payments_at(date, months, filter.clone())))
             .collect()
     }
 }

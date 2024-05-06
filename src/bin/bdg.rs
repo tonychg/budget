@@ -25,6 +25,9 @@ enum Commands {
         /// Show the detail of payments
         #[arg(short, long)]
         all: bool,
+        /// Filter
+        #[arg(short, long)]
+        filter: Option<String>,
     },
 }
 
@@ -35,19 +38,10 @@ fn main() {
             budget,
             months,
             all,
+            filter,
         } => {
             let budget = Budget::from_file(budget);
-            let mut total = 0.0;
-            budget
-                .group_by_month(months)
-                .iter()
-                .for_each(|(date, group)| {
-                    println!("{} total={} month={}", date, total, group.sum());
-                    if all {
-                        group.iter().for_each(|line| println!("  {}", line));
-                    }
-                    total += group.sum();
-                });
+            budget.show(months, filter, all);
         }
     }
 }
