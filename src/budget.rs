@@ -12,7 +12,21 @@ pub(crate) use {
     payment::{Payment, PaymentGroup, Recurence},
 };
 
-use std::{fs, path::PathBuf};
+use anyhow::*;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
+
+#[derive(Debug, thiserror::Error)]
+pub enum BudgetError {
+    #[error("No file provided")]
+    NoFileProvided,
+    #[error("File unreadable: {0:?}")]
+    UnreadableFile(#[source] std::io::Error),
+    #[error("Invalid TOML file: {0}")]
+    InvalidToml(#[from] toml::de::Error),
+}
 
 #[derive(Clone, Debug)]
 pub struct Budget {
@@ -21,16 +35,44 @@ pub struct Budget {
 }
 
 impl Budget {
-    pub fn from_file(path: PathBuf) -> Self {
-        let config: Config =
-            toml::from_str(&fs::read_to_string(path).expect("Unable to read file"))
-                .expect("Invalid TOML file");
-        config.into()
+    pub fn load(paths: Vec<PathBuf>) -> Result<Self> {
+        match paths.is_empty() {
+            true => bail!(BudgetError::NoFileProvided),
+            false => {
+                let mut budget = Self::from_file(paths.first().unwrap().to_path_buf())?;
+                for path in paths.iter().skip(1) {
+                    budget.merge(Self::from_file(path.to_path_buf())?);
+                }
+                Ok(budget)
+            }
+        }
     }
 
-    pub fn from_export(path: PathBuf) -> Self {
-        let export = Export::from_file(path);
-        export.into()
+    pub fn from_file(path: PathBuf) -> Result<Self> {
+        if Self::is_csv(&path) {
+            Ok(Export::from_file(path).into())
+        } else {
+            Self::from_toml(path)
+        }
+    }
+
+    pub fn from_toml(path: PathBuf) -> Result<Self> {
+        Ok(toml::from_str::<Config>(&fs::read_to_string(path)?)?.into())
+    }
+
+    fn extract_extension(path: &Path) -> Option<String> {
+        path.extension()?
+            .to_str()?
+            .to_string()
+            .to_lowercase()
+            .into()
+    }
+
+    fn is_csv(path: &Path) -> bool {
+        match Self::extract_extension(path) {
+            Some(extension) => extension == "csv",
+            None => false,
+        }
     }
 
     pub fn show(&self, months: u32, filter: Vec<String>, all: bool) {
@@ -39,12 +81,19 @@ impl Budget {
         self.group_by_month(months, filter)
             .iter()
             .for_each(|(date, group)| {
-                println!("{} total={} month={}", date, total, group.sum());
+                println!("{} total={:>8.2} month={:>8.2}", date, total, group.sum());
                 if all {
                     group.iter().for_each(|line| println!("  {}", line));
                 }
                 total += group.sum();
             });
+    }
+
+    fn merge(&mut self, budget: Self) {
+        self.payments.extend(budget.payments);
+        self.payments
+            .sort_by(|a, b| a.date().partial_cmp(&b.date()).unwrap());
+        self.calendar = Calendar::new(&self.payments.first().unwrap().date().modulo().to_string());
     }
 
     fn payments_at(&self, date: Date, months: u32, filter: Vec<String>) -> PaymentGroup {

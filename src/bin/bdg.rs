@@ -1,3 +1,4 @@
+use anyhow::*;
 use budget::Budget;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
@@ -17,8 +18,8 @@ struct Bdg {
 enum Commands {
     /// Shows the budget group by month
     Show {
-        /// Sets config file
-        budget: PathBuf,
+        /// Sets config files
+        budgets: Vec<PathBuf>,
         /// Sets the number of months to show
         #[arg(short, long, default_value = "12")]
         months: u32,
@@ -31,26 +32,16 @@ enum Commands {
     },
 }
 
-fn main() {
+fn main() -> Result<()> {
     env_logger::init();
 
     match Bdg::parse().command {
         Commands::Show {
-            budget,
+            budgets,
             months,
             all,
             filter,
-        } => {
-            match budget
-                .extension()
-                .expect("File with not extension, can't detect filetype")
-                .to_str()
-                .expect("Invalid filename")
-            {
-                "toml" => Budget::from_file(budget).show(months, filter, all),
-                "csv" => Budget::from_export(budget).show(months, filter, all),
-                _ => panic!("Extension not supported: toml,csv"),
-            };
-        }
+        } => Budget::load(budgets)?.show(months, filter, all),
     }
+    Ok(())
 }

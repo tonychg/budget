@@ -1,4 +1,4 @@
-use chrono::{DateTime, FixedOffset, Months, Utc};
+use chrono::{DateTime, Datelike, FixedOffset, Months, Utc};
 use core::fmt;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
@@ -43,5 +43,9 @@ impl Date {
                 .checked_add_months(Months::new(months))
                 .expect("Invalid months value"),
         )
+    }
+
+    pub fn modulo(&self) -> Self {
+        Date::from(format!("{}-{}-{}", self.0.year(), self.0.month(), "01"))
     }
 }
