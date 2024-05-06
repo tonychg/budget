@@ -8,7 +8,7 @@ struct Bdg {
     /// Turn debugging information on
     #[arg(short, long, action = clap::ArgAction::Count)]
     debug: u8,
-
+    /// Command to run
     #[command(subcommand)]
     command: Commands,
 }
@@ -27,16 +27,14 @@ enum Commands {
         all: bool,
         /// Filter
         #[arg(short, long)]
-        filter: Option<String>,
+        filter: Vec<String>,
     },
 }
 
 fn main() {
-    let bdg = Bdg::parse();
-
     env_logger::init();
 
-    match bdg.command {
+    match Bdg::parse().command {
         Commands::Show {
             budget,
             months,

@@ -33,7 +33,7 @@ impl Budget {
         export.into()
     }
 
-    pub fn show(&self, months: u32, filter: Option<String>, all: bool) {
+    pub fn show(&self, months: u32, filter: Vec<String>, all: bool) {
         let mut total = 0.0;
 
         self.group_by_month(months, filter)
@@ -47,24 +47,20 @@ impl Budget {
             });
     }
 
-    fn payments_at(&self, date: Date, months: u32, filter: Option<String>) -> PaymentGroup {
+    fn payments_at(&self, date: Date, months: u32, filter: Vec<String>) -> PaymentGroup {
         self.payments
             .clone()
             .into_iter()
             .flat_map(|payment| payment.flatten(months))
-            .filter(move |payment| match &filter {
-                Some(search) => {
-                    payment.label_match(search)
-                        && payment.date() >= date
-                        && payment.date() < date.add_months(1)
-                }
-
-                None => payment.date() >= date && payment.date() < date.add_months(1),
+            .filter(move |payment| payment.date() >= date && payment.date() < date.add_months(1))
+            .filter(move |payment| match filter.is_empty() {
+                false => filter.iter().any(|f| payment.label_match(f)),
+                true => true,
             })
             .collect()
     }
 
-    fn group_by_month(&self, months: u32, filter: Option<String>) -> Vec<(Date, PaymentGroup)> {
+    fn group_by_month(&self, months: u32, filter: Vec<String>) -> Vec<(Date, PaymentGroup)> {
         self.calendar
             .clone()
             .iter_months(months)

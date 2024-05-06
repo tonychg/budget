@@ -1,4 +1,5 @@
-use std::{fs, path::PathBuf};
+#![allow(dead_code)]
+use std::path::PathBuf;
 
 use serde::Deserialize;
 
