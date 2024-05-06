@@ -49,3 +49,50 @@ impl Date {
         Date::from(format!("{}-{}-{}", self.0.year(), self.0.month(), "01"))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Date;
+    use chrono::DateTime;
+
+    #[test]
+    fn test_from_string() {
+        assert_eq!(
+            Date::from("2021-02-01".to_string()),
+            Date(
+                DateTime::parse_from_str("2021-02-01 12:00:00 +0000", "%Y-%m-%d %H:%M:%S %z")
+                    .unwrap()
+            )
+        );
+    }
+
+    #[test]
+    fn test_from_string_slash_format() {
+        assert_eq!(
+            Date::from("01/02/2021".to_string()),
+            Date(
+                DateTime::parse_from_str("01/02/2021 12:00:00 +0000", "%d/%m/%Y %H:%M:%S %z")
+                    .unwrap()
+            )
+        );
+    }
+
+    #[test]
+    fn test_display() {
+        let date = Date::from("2021-02-01".to_string());
+        assert_eq!(date.to_string(), "2021-02-01".to_string());
+    }
+
+    #[test]
+    fn test_add_months() {
+        let date = Date::from("2021-01-01".to_string());
+        assert_eq!(date.add_months(1), Date::from("2021-02-01".to_string()));
+        assert_eq!(date.add_months(12), Date::from("2022-01-01".to_string()));
+    }
+
+    #[test]
+    fn test_modulo() {
+        let date = Date::from("2021-01-15".to_string());
+        assert_eq!(date.modulo(), Date::from("2021-01-01".to_string()));
+    }
+}
