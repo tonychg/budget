@@ -37,6 +37,16 @@ impl Display for Date {
 }
 
 impl Date {
+    pub fn repeat_by_month(&self, months: u32) -> Vec<Self> {
+        (0..months).map(|i| self.add_months(i)).collect()
+    }
+
+    pub fn to_month_interval(&self) -> (Date, Date) {
+        let start = self.modulo();
+        let end = Date(start.add_months(1).modulo().0 - chrono::Duration::days(1));
+        (start, end)
+    }
+
     pub fn add_months(&self, months: u32) -> Self {
         Date(
             self.0
@@ -94,5 +104,65 @@ mod tests {
     fn test_modulo() {
         let date = Date::from("2021-01-15".to_string());
         assert_eq!(date.modulo(), Date::from("2021-01-01".to_string()));
+    }
+
+    #[test]
+    fn test_repeat_by_one_month() {
+        let result = Date::from("2021-01-01".to_string()).repeat_by_month(1);
+        let expected = vec![Date::from("2021-01-01".to_string())];
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_repeat_by_month() {
+        let result = Date::from("2021-01-01".to_string()).repeat_by_month(3);
+        let expected = vec![
+            Date::from("2021-01-01".to_string()),
+            Date::from("2021-02-01".to_string()),
+            Date::from("2021-03-01".to_string()),
+        ];
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_repeat_by_month_limit() {
+        let result = Date::from("2021-01-31".to_string()).repeat_by_month(4);
+        let expected = vec![
+            Date::from("2021-01-31".to_string()),
+            Date::from("2021-02-28".to_string()),
+            Date::from("2021-03-31".to_string()),
+            Date::from("2021-04-30".to_string()),
+        ];
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_month_date() {
+        let result = Date::from("2021-01-15".to_string()).to_month_interval();
+        let expected = (
+            Date::from("2021-01-01".to_string()),
+            Date::from("2021-01-31".to_string()),
+        );
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_month_date_leap_year() {
+        let result = Date::from("2024-02-15".to_string()).to_month_interval();
+        let expected = (
+            Date::from("2024-02-01".to_string()),
+            Date::from("2024-02-29".to_string()),
+        );
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_month_date_normal_year() {
+        let result = Date::from("2023-02-15".to_string()).to_month_interval();
+        let expected = (
+            Date::from("2023-02-01".to_string()),
+            Date::from("2023-02-28".to_string()),
+        );
+        assert_eq!(result, expected);
     }
 }

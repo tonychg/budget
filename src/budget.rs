@@ -49,10 +49,9 @@ impl Budget {
     }
 
     pub fn from_file(path: PathBuf) -> Result<Self> {
-        if Self::is_csv(&path) {
-            Ok(Export::from_file(path).into())
-        } else {
-            Self::from_toml(path)
+        match Self::is_csv(&path) {
+            true => Ok(Export::from_file(path).into()),
+            false => Self::from_toml(path),
         }
     }
 
@@ -100,8 +99,11 @@ impl Budget {
         self.payments
             .clone()
             .into_iter()
-            .flat_map(|payment| payment.flatten(months))
-            .filter(move |payment| payment.date() >= date && payment.date() < date.add_months(1))
+            .flat_map(|payment| payment.repeat(months))
+            .filter(move |payment| {
+                let (start, end) = date.to_month_interval();
+                payment.date() >= start && payment.date() <= end
+            })
             .filter(move |payment| match filter.is_empty() {
                 false => filter.iter().any(|f| payment.label_match(f)),
                 true => true,

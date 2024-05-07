@@ -54,12 +54,14 @@ impl Payment {
             .unwrap_or(Recurence::NumberOfMonths(1))
     }
 
-    pub fn flatten(&self, months: u32) -> Vec<Payment> {
-        (0..self.recurence().months(months))
-            .map(|i| Payment {
+    pub fn repeat(&self, months: u32) -> Vec<Payment> {
+        self.date
+            .repeat_by_month(self.recurence().months(months))
+            .into_iter()
+            .map(|date| Payment {
                 label: self.label.clone(),
                 amount: self.amount,
-                date: self.date.add_months(i),
+                date,
                 recurence: None,
             })
             .collect()
